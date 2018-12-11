@@ -1,0 +1,279 @@
+---
+title: "downstream_analysis_RNA_seq"
+author: "BT"
+date: "2018/12/3"
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 
+
+```{r}
+library(dplyr)
+```
+
+## filtering effectors up-regulated
+```{r}
+mydata<-read.csv('/Users/tangb/general/raw_data_xia/all_cer7.csv')
+
+effectors_up_cer7_diff_wt_vs_cer7_down<-mydata%>%
+  filter(log2FoldChange_WT_vs_CER7<=-1, padj_WT_vs_CER7<=0.05)%>%
+  filter(effector=='yes')%>%
+  arrange(target_id)%>%
+  mutate(sum_wt=WT_1+WT_2+WT_3+WT_4+WT_5)%>%
+  filter(sum_wt<=5000)%>%
+  mutate(sum_cer=CER7_1+CER7_2+CER7_3+CER7_4+CER7_5,sum_ko=KO_1+KO_2+KO_3+KO_4+KO_5)%>%
+  filter(sum_cer>=500)%>%
+  select(log2FoldChange_WT_vs_CER7, target_id,sum_cer,sum_ko,sum_wt)
+  
+
+effectors_up_rgs_diff_wt_vs_rgs_down<-mydata%>%
+  filter(log2FoldChange_WT_VS_RGS<=-1, padj_WT_VS_RGS<=0.05)%>%
+  filter(effector=='yes')%>%
+  arrange(target_id)%>%
+  mutate(sum_wt=WT_1+WT_2+WT_3+WT_4+WT_5)%>%
+  filter(sum_wt<=5000)%>%
+  mutate(sum_cer=CER7_1+CER7_2+CER7_3+CER7_4+CER7_5,sum_ko=KO_1+KO_2+KO_3+KO_4+KO_5)%>%
+  filter(sum_ko>=500)%>%
+  select(log2FoldChange_WT_VS_RGS, target_id,sum_cer,sum_ko,sum_wt)
+
+effectors_both<-mydata%>%
+  filter(log2FoldChange_WT_VS_RGS<=-1, padj_WT_VS_RGS<=0.05,     
+  log2FoldChange_WT_vs_CER7<=-1, padj_WT_vs_CER7<=0.05)%>%
+  filter(effector=='yes')%>%
+  arrange(target_id)%>%
+  mutate(sum_wt=WT_1+WT_2+WT_3+WT_4+WT_5)%>%
+  filter(sum_wt<=5000)%>%
+  mutate(sum_cer=CER7_1+CER7_2+CER7_3+CER7_4+CER7_5,sum_ko=KO_1+KO_2+KO_3+KO_4+KO_5)%>%
+  filter(sum_ko>=500,sum_cer>=500)%>%
+  select(target_id,WT_1:KO_5)
+
+effectors_both_transform_plotting<-mydata%>%
+  filter(log2FoldChange_WT_VS_RGS<=-1, padj_WT_VS_RGS<=0.05,     
+  log2FoldChange_WT_vs_CER7<=-1, padj_WT_vs_CER7<=0.05)%>%
+  filter(effector=='yes')%>%
+  arrange(target_id)%>%
+  mutate(sum_wt=WT_1+WT_2+WT_3+WT_4+WT_5)%>%
+  filter(sum_wt<=5000)%>%
+  mutate(sum_cer=CER7_1+CER7_2+CER7_3+CER7_4+CER7_5,sum_ko=KO_1+KO_2+KO_3+KO_4+KO_5)%>%
+  filter(sum_ko>=500,sum_cer>=500)%>%
+  select(target_id,WT_1:KO_5)%>%
+  gather(key='treatment',value='expression',WT_1:KO_5)%>%
+  arrange(target_id)%>%
+  separate(treatment, into=c('sample_type','replicates'),sep='_')%>%
+  mutate(log10=log10(expression+1))
+
+effectors_both
+effectors_up_rgs_diff_wt_vs_rgs_down
+effectors_up_cer7_diff_wt_vs_cer7_down
+```
+# this part is for DEGs up for this RNA-seq
+```{r}
+DEGs_cer7_vs_rgs<-mydata%>%
+  filter(log2FoldChange_CER7_vs_rgs1ko>=1,padj_CER7_vs_rgs1ko<=0.05)
+
+DEGs_wt_vs_rgs<-mydata%>%
+  filter(log2FoldChange_WT_VS_RGS<=-1, padj_WT_VS_RGS<=0.05)
+
+DEGs_wt_vs_cer7<-mydata%>%
+  filter(log2FoldChange_WT_vs_CER7<=-1, padj_WT_vs_CER7<=0.05)
+
+DEGs_wt_vs_rgs_effector<-mydata%>%
+  filter(log2FoldChange_WT_VS_RGS<=-1, padj_WT_VS_RGS<=0.05)%>%
+  filter(effector=='yes')
+
+DEGs_wt_vs_cer7_effector<-mydata%>%
+  filter(log2FoldChange_WT_vs_CER7<=-1, padj_WT_vs_CER7<=0.05)%>%
+  filter(effector=='yes')
+
+DEGS_wt_cer7_rgs<-mydata%>%
+  filter(log2FoldChange_WT_vs_CER7<=-1, padj_WT_vs_CER7<=0.05)%>%
+  filter(log2FoldChange_WT_VS_RGS<=-1, padj_WT_VS_RGS<=0.05)
+
+effector_candidates<-mydata%>%
+  filter(effector=='yes')
+
+effector_up_cer_rgs<-mydata%>%
+  filter(log2FoldChange_WT_vs_CER7<=-1, padj_WT_vs_CER7<=0.05)%>%
+  filter(log2FoldChange_WT_VS_RGS<=-1, padj_WT_VS_RGS<=0.05)%>%
+  filter(effector=='yes')
+```
+
+# this part is for DEGs down for this RNA-seq
+```{r}
+DEGs_wt_vs_rgs_d<-mydata%>%
+  filter(log2FoldChange_WT_VS_RGS>=1, padj_WT_VS_RGS<=0.05)
+
+DEGs_wt_vs_cer7_d<-mydata%>%
+  filter(log2FoldChange_WT_vs_CER7>=1, padj_WT_vs_CER7<=0.05)
+
+DEGs_wt_vs_rgs_effector_d<-mydata%>%
+  filter(log2FoldChange_WT_VS_RGS>=1, padj_WT_VS_RGS<=0.05)%>%
+  filter(effector=='yes')
+
+DEGs_wt_vs_cer7_effector_d<-mydata%>%
+  filter(log2FoldChange_WT_vs_CER7>=1, padj_WT_vs_CER7<=0.05)%>%
+  filter(effector=='yes')
+
+DEGS_wt_cer7_rgs_d<-mydata%>%
+  filter(log2FoldChange_WT_vs_CER7>=1, padj_WT_vs_CER7<=0.05)%>%
+  filter(log2FoldChange_WT_VS_RGS>=1, padj_WT_VS_RGS<=0.05)
+
+effector_candidates<-mydata%>%
+  filter(effector=='yes')
+
+effector_up_cer_rgs_d<-mydata%>%
+  filter(log2FoldChange_WT_vs_CER7>=1, padj_WT_vs_CER7<=0.05)%>%
+  filter(log2FoldChange_WT_VS_RGS>=1, padj_WT_VS_RGS<=0.05)%>%
+  filter(effector=='yes')
+```
+
+#plot some figures
+```{r}
+mydata
+library(pheatmap)
+reads_heatmap<-mydata%>%
+  mutate(sum_wt=WT_1+WT_2+WT_3+WT_4+WT_5)%>%
+  mutate(sum_cer=CER7_1+CER7_2+CER7_3+CER7_4+CER7_5,sum_ko=KO_1+KO_2+KO_3+KO_4+KO_5)%>%
+  filter(sum_wt>=10, sum_cer>=10,sum_ko>=10)%>%  
+  select(WT_1:KO_5)
+
+pheatmap(reads_heatmap,scale = 'row',cluster_cols = FALSE, show_rownames= FALSE)
+```
+# PCA for DEGs and effectors
+```{r}
+install.packages("devtools") 
+library(devtools)
+install_github("vqv/ggbiplot")
+library(ggbiplot)
+
+pca_all<-read.csv('/Users/tangbozeng/Desktop/pca_convert.csv')
+pca_all_list<-c('WT','WT','WT','WT','WT', 'CER7','CER7','CER7','CER7','CER7','rgs1_KO','rgs1_KO','rgs1_KO','rgs1_KO','rgs1_KO')
+CER7_all.pca <- prcomp(pca_all, scale. = TRUE)
+ggbiplot(CER7_all.pca, obs.scale = 1, var.scale = 1,
+  groups = pca_all_list, ellipse = TRUE, circle = TRUE, var.axes = F) +
+  scale_color_discrete(name = '') +
+  theme(legend.direction = 'horizontal', legend.position = 'top')
+
+pca_effector<-read.csv('/Users/tangbozeng/Desktop/pca_effector.csv')
+pca_all_list<-c('WT','WT','WT','WT','WT', 'CER7','CER7','CER7','CER7','CER7','rgs1_KO','rgs1_KO','rgs1_KO','rgs1_KO','rgs1_KO')
+effector_pca<-prcomp(pca_effector, scale. = TRUE)
+ggbiplot(effector_pca, obs.scale = 1, var.scale = 1,
+  groups = pca_all_list, ellipse = TRUE, circle = TRUE, var.axes = F) +
+  scale_color_discrete(name = '')
+```
+
+#venn diagramm
+```{r}
+library(VennDiagram)
+venn.plot <- draw.triple.venn(
+	area1 = 996,
+	area2 = 1126,
+	area3 = 621,
+	n12 = 757,
+	n23 = 98,
+	n13 = 89,
+	n123 = 60,
+	category = c("Upregulated_in_CER7", "Upregulated_in_rgs1KO", "known_or_predicted_effectors"),
+	fill = c("blue", "red", "yellow"),
+	lty = "blank",
+	cex = 2,
+	cat.cex = 1,
+	cat.col = c("blue", "red", "yellow")
+	)
+```
+
+## PCA for all and effectors from all transcriptome data
+
+```{r}
+pca_xia_all_control<-read.csv('/Users/tangb/general/raw_data_xia/all_transcriptome_for_pca.csv')
+
+pca_xia_all_control<-pca_xia_all_control%>%
+  filter(sum>0)%>%
+  select(-effector)
+
+pca_xia_all_control_clean<-pca_xia_all_control%>%
+  filter(sum>0)%>%
+  select(leafdrop_t00_2:guy11_MM_N_3)
+
+pheatmap(pca_xia_all_control_clean, scale = 'row', cluster_rows = FALSE, show_rownames = FALSE)
+
+pca_effector_all<-pca_xia_all_control%>%
+  filter(sum>0)%>%
+  filter(effector=='yes')%>%
+  select(leafdrop_t00_1:guy11_MM_N_3)
+
+pheatmap(pca_effector_all,scale = 'row', cluster_rows = FALSE, show_rownames = FALSE )
+pheatmap(pca_effector_all,scale = 'row', cluster_rows = FALSE, show_rownames = FALSE, color = colorRampPalette(c("navy", "white", "firebrick3"))(50))
+  
+pca_effector_all_nospray<-pca_xia_all_control%>%
+  filter(sum>0)%>%
+  filter(effector=='yes')%>%
+  select(leafdrop_t00_1:leafdrop_t144_3, guy11_MM_C_1:guy11_MM_N_3)
+```
+# machine learning to make classification for effectors profilling
+```{r}
+pca_effector_all<-pca_xia_all_control%>%
+  filter(sum>0)%>%
+  filter(effector=='yes')%>%
+  select(leafdrop_t00_1:guy11_MM_N_3)
+
+install.packages("factoextra")# Install cluster package
+install.packages("cluster")
+library("cluster")
+library("factoextra")
+
+res.dist <- get_dist(pca_effector_all, stand = TRUE, method = "pearson")
+
+fviz_dist(res.dist, 
+          gradient = list(low = "#00AFBB", mid = "white", high = "#FC4E07"))
+
+fviz_nbclust(pca_effector_all, kmeans, method = "gap_stat")
+
+write.csv(km.res$cluster,'reulst_clustering_effector.csv')
+write.csv(pca_effector_all,'pca_effector_list.csv')
+
+post_cluster_effecotor<-read.csv('/Users/tangb/general/pca_effector_list.csv')
+
+View(pca_effector_all)
+test1<-pca_effector_all%>%
+  gather(key='samples','expression', leafdrop_t00_1:guy11_MM_N_3) # covert timepoints into columnns
+
+post_cluster_effecotor<-read.csv('/Users/tangb/general/pca_effector_list.csv')
+
+plotting_effectors_clusters<-new_cluster_effecotor%>%
+  select(-X)%>%
+  gather(key='samples_all','expression',leafdrop_t00_1:guy11_MM_N_3)
+
+library(ggplot2)
+ploting<-ggplot(data=plotting_effectors_clusters)+aes(x=samples, y=expression)+geom_boxplot(aes(fill=samples))+facet_wrap(~class)
+ploting
+
+
+new_ploting_effectors_classification<-read.csv('tem_all.csv')
+new_ploting_effectors_classification<-new_ploting_effectors_classification%>%
+  select(-X)
+
+effectors_both_transform_plotting<-mydata%>%
+  filter(log2FoldChange_WT_VS_RGS<=-1,padj_WT_VS_RGS<=0.05,log2FoldChange_WT_vs_CER7<=-1,padj_WT_vs_CER7<=0.05)%>%
+  filter(effector=='yes')%>%
+  arrange(target_id)%>%
+  mutate(sum_wt=WT_1+WT_2+WT_3+WT_4+WT_5)%>%
+  filter(sum_wt<=5000)%>%
+  mutate(sum_cer=CER7_1+CER7_2+CER7_3+CER7_4+CER7_5,sum_ko=KO_1+KO_2+KO_3+KO_4+KO_5)%>%
+  filter(sum_ko>=500,sum_cer>=500)%>%
+  select(target_id,WT_1:KO_5)%>%
+  gather(key='treatment',value='expression',WT_1:KO_5)%>%
+  arrange(target_id)%>%
+  separate(treatment, into=c('sample_type','replicates'),sep='_')%>%
+  mutate(log10=log10(expression))
+
+p<-ggplot(data=effectors_both_transform_plotting)+aes(x=sample_type,y=log10)+geom_violin(aes(fill=sample_type),width=1)+geom_boxplot(width=0.3)+geom_jitter(aes(colour=sample_type),size=0.2)+geom_point(aes(colour=sample_type),size=0.2)+facet_wrap(~target_id)+ylim(0.8,4)
+```
+
