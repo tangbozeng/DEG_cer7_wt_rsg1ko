@@ -76,13 +76,18 @@ effectors_up_cer7_diff_wt_vs_cer7_down
 # this part is for DEGs up for this RNA-seq
 ```{r}
 DEGs_cer7_vs_rgs<-mydata%>%
-  filter(log2FoldChange_CER7_vs_rgs1ko>=1,padj_CER7_vs_rgs1ko<=0.05)
+  filter(log2FoldChange_CER7_vs_rgs1ko>=1 | log2FoldChange_CER7_vs_rgs1ko<=-1)%>%
+  filter(padj_CER7_vs_rgs1ko<=0.05)
 
 DEGs_wt_vs_rgs<-mydata%>%
-  filter(log2FoldChange_WT_VS_RGS<=-1, padj_WT_VS_RGS<=0.05)
+  filter(log2FoldChange_WT_VS_RGS<=-1 |log2FoldChange_WT_VS_RGS>=1)%>%
+  filter(padj_WT_VS_RGS<=0.05)
 
 DEGs_wt_vs_cer7<-mydata%>%
-  filter(log2FoldChange_WT_vs_CER7<=-1, padj_WT_vs_CER7<=0.05)
+  filter(log2FoldChange_WT_vs_CER7<=-1| log2FoldChange_WT_vs_CER7>=1)%>%
+  filter(padj_WT_vs_CER7<=0.05)
+  
+#how they overlay with effectors
 
 DEGs_wt_vs_rgs_effector<-mydata%>%
   filter(log2FoldChange_WT_VS_RGS<=-1, padj_WT_VS_RGS<=0.05)%>%
@@ -92,9 +97,6 @@ DEGs_wt_vs_cer7_effector<-mydata%>%
   filter(log2FoldChange_WT_vs_CER7<=-1, padj_WT_vs_CER7<=0.05)%>%
   filter(effector=='yes')
 
-DEGS_wt_cer7_rgs<-mydata%>%
-  filter(log2FoldChange_WT_vs_CER7<=-1, padj_WT_vs_CER7<=0.05)%>%
-  filter(log2FoldChange_WT_VS_RGS<=-1, padj_WT_VS_RGS<=0.05)
 
 effector_candidates<-mydata%>%
   filter(effector=='yes')
