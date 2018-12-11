@@ -219,7 +219,7 @@ pca_effector_all_nospray<-pca_xia_all_control%>%
   filter(effector=='yes')%>%
   select(leafdrop_t00_1:leafdrop_t144_3, guy11_MM_C_1:guy11_MM_N_3)
 ```
-# machine learning to make classification for effectors profilling
+# combine all expression data to see effectors expression
 ```{r}
 pca_effector_all<-pca_xia_all_control%>%
   filter(sum>0)%>%
